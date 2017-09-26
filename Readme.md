@@ -8,6 +8,10 @@ An installable .zip can be downloaded from "[Releases](https://github.com/romanv
 The methods of obtaining such content, for example parsing websites or working with various APIs,
 are beyond the scope of this example.
 
+**Note2**: this version of the example plugin is compatible with both Python 2 and 3,
+and uses `six` library to wrap version-specific Python features. So it may also
+serve as a minimal example of hot to create Kodi plugins compatible with Python 2 and 3.
+
 The plugin uses a pre-defined set of free sample videos from [www.vidsplay.com](http://www.vidsplay.com/).
 
 **Warning**: the "master" branch is only compatible with Kody 16.0 (Jarvis) and above. For older versions see the "legacy" branch.
