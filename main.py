@@ -3,10 +3,17 @@
 # Author: Roman V. M.
 # Created on: 28.11.2014
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
+"""
+An example video plugin that is compatible with both Python 2 and Python 3
+
+It uses `six <http://six.readthedocs.io/>`_ library to wrap version-specific
+Python features.
+"""
 
 import sys
-from urllib import urlencode
-from urlparse import parse_qsl
+# Import six wrappers for version specific Python features
+from six import iterkeys
+from six.moves.urllib_parse import urlencode, parse_qsl
 import xbmcgui
 import xbmcplugin
 
@@ -86,7 +93,7 @@ def get_categories():
     :return: The list of video categories
     :rtype: list
     """
-    return VIDEOS.iterkeys()
+    return iterkeys(VIDEOS)
 
 
 def get_videos(category):
