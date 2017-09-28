@@ -19,6 +19,7 @@ _handle = int(sys.argv[1])
 # Here we use a fixed set of properties simply for demonstrating purposes
 # In a "real life" plugin you will need to get info and links to video files/streams
 # from some web-site or online service.
+'''
 VIDEOS = {'Animals': [{'name': 'Crab',
                        'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg',
                        'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4',
@@ -58,7 +59,9 @@ VIDEOS = {'Animals': [{'name': 'Crab',
                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/pizza.mp4',
                       'genre': 'Food'}
                      ]}
-
+'''
+VIDEOS = {}
+VIDEOS['Bangla'] = []
 
 def get_url(**kwargs):
     """
@@ -88,6 +91,19 @@ def get_categories():
     """
     return VIDEOS.keys()
 
+def get_links():
+    url = 'http://app.jagobd.com/jagobd_app/index10.php'
+
+    post_fields = {'tag': 'get_all_channel_free'}
+    params = urlencode(post_fields)
+    headers = {'jbd-token': '8388e6b188295130aa432ae250e3e3bb'}
+
+    req = Request(url, params, headers)
+    response = urlopen(req)
+
+    x = load(response)
+    for channel in x['channel'] :
+        VIDEOS['Bangla'].append( { 'name': channel["name"], 'video': channel["stream_url"], 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
 
 def get_videos(category):
     """
