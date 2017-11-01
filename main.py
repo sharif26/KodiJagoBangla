@@ -1,65 +1,18 @@
-# -*- coding: utf-8 -*-
-# Module: default
-# Author: Roman V. M.
-# Created on: 28.11.2014
-# License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
-
 import sys
 from urllib import urlencode
+from urllib2 import urlopen
+from urllib2 import Request
+from json import load
 from urlparse import parse_qsl
 import xbmcgui
 import xbmcplugin
+import re
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
 
-# Free sample videos are provided by www.vidsplay.com
-# Here we use a fixed set of properties simply for demonstrating purposes
-# In a "real life" plugin you will need to get info and links to video files/streams
-# from some web-site or online service.
-'''
-VIDEOS = {'Animals': [{'name': 'Crab',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4',
-                       'genre': 'Animals'},
-                      {'name': 'Alligator',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/alligator-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/alligator.mp4',
-                       'genre': 'Animals'},
-                      {'name': 'Turtle',
-                       'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/turtle-screenshot.jpg',
-                       'video': 'http://www.vidsplay.com/wp-content/uploads/2017/04/turtle.mp4',
-                       'genre': 'Animals'}
-                      ],
-            'Cars': [{'name': 'Postal Truck',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/us_postal-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/us_postal.mp4',
-                      'genre': 'Cars'},
-                     {'name': 'Traffic',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic1-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic1.mp4',
-                      'genre': 'Cars'},
-                     {'name': 'Traffic Arrows',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic_arrows-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/traffic_arrows.mp4',
-                      'genre': 'Cars'}
-                     ],
-            'Food': [{'name': 'Chicken',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/bbq_chicken-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/bbqchicken.mp4',
-                      'genre': 'Food'},
-                     {'name': 'Hamburger',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/hamburger-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/hamburger.mp4',
-                      'genre': 'Food'},
-                     {'name': 'Pizza',
-                      'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/05/pizza-screenshot.jpg',
-                      'video': 'http://www.vidsplay.com/wp-content/uploads/2017/05/pizza.mp4',
-                      'genre': 'Food'}
-                     ]}
-'''
 VIDEOS = {}
 VIDEOS['Bangla'] = []
 
@@ -89,9 +42,11 @@ def get_categories():
     :return: The list of video categories
     :rtype: list
     """
-    return VIDEOS.keys()
+    return VIDEOS.iterkeys()
 
 def get_links():
+    VIDEOS['Bangla'].append( { 'name': 'Maasranga TV', 'video': 'http://103.9.114.165:1935/tvprogram/MAASRANGA-TV/playlist.m3u8', 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+
     url = 'http://app.jagobd.com/jagobd_app/index10.php'
 
     post_fields = {'tag': 'get_all_channel_free'}
@@ -102,8 +57,16 @@ def get_links():
     response = urlopen(req)
 
     x = load(response)
+    churl = 'news24local.stream'
     for channel in x['channel'] :
-        VIDEOS['Bangla'].append( { 'name': channel["name"], 'video': channel["stream_url"], 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+        cname = channel["name"].split("|")[0]
+        churl = channel["stream_url"]
+        if cname.startswith('Boishakhi'):
+            churl = re.sub('\d+.\d+.\d+.\d+:\d+','us.jagobd.com:1937',churl)
+        VIDEOS['Bangla'].append( { 'name': cname, 'video': churl, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+    
+    churl = re.sub('[a-zA-Z0-9\-]+.stream','ekusheytv-8-org.stream',churl)
+    VIDEOS['Bangla'].append( { 'name': 'Ekushaey TV', 'video': churl, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
 
 def get_videos(category):
     """
@@ -127,12 +90,6 @@ def list_categories():
     """
     Create the list of video categories in the Kodi interface.
     """
-    # Set plugin category. It is displayed in some skins as the name
-    # of the current section.
-    xbmcplugin.setPluginCategory(_handle, 'My Video Collection')
-    # Set plugin content. It allows Kodi to select appropriate views
-    # for this type of content.
-    xbmcplugin.setContent(_handle, 'videos')
     # Get video categories
     categories = get_categories()
     # Iterate through categories
@@ -171,12 +128,6 @@ def list_videos(category):
     :param category: Category name
     :type category: str
     """
-    # Set plugin category. It is displayed in some skins as the name
-    # of the current section.
-    xbmcplugin.setPluginCategory(_handle, category)
-    # Set plugin content. It allows Kodi to select appropriate views
-    # for this type of content.
-    xbmcplugin.setContent(_handle, 'videos')
     # Get the list of videos in the category.
     videos = get_videos(category)
     # Iterate through videos.
@@ -193,7 +144,7 @@ def list_videos(category):
         # This is mandatory for playable items!
         list_item.setProperty('IsPlayable', 'true')
         # Create a URL for a plugin recursive call.
-        # Example: plugin://plugin.video.example/?action=play&video=http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4
+        # Example: plugin://plugin.video.example/?action=play&video=http://www.vidsplay.com/vids/crab.mp4
         url = get_url(action='play', video=video['video'])
         # Add the list item to a virtual Kodi folder.
         # is_folder = False means that this item won't open any sub-list.
@@ -229,6 +180,7 @@ def router(paramstring):
     """
     # Parse a URL-encoded paramstring to the dictionary of
     # {<parameter>: <value>} elements
+    get_links()
     params = dict(parse_qsl(paramstring))
     # Check the parameters passed to the plugin
     if params:
