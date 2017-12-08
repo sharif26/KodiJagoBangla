@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# Module: default
+# Author: Roman V. M.
+# Created on: 28.11.2014
+# License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 import sys
 from urllib import urlencode
 from urllib2 import urlopen
@@ -7,14 +12,106 @@ from urlparse import parse_qsl
 import xbmcgui
 import xbmcplugin
 import re
+import urlresolver
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
 
+# Free sample videos are provided by www.vidsplay.com
+# Here we use a fixed set of properties simply for demonstrating purposes
+# In a "real life" plugin you will need to get info and links to video files/streams
+# from some web-site or online service.
+'''
+VIDEOS = {'Bangla': [{'name': 'ATN',
+                       'thumb': 'http://www.vidsplay.com/vids/crab.jpg',
+                       'video': 'http://203.76.117.226/hls/AtN@B@N0/index.m3u8',
+                       'genre': 'Bangla'},
+					  {'name': 'Bangla Vision',
+					   'thumb': 'http://www.vidsplay.com/vids/traffic1.jpg',
+					   'video': 'http://203.76.117.226/hls/Vb@N@loAV/index.m3u8',
+					  'genre': 'Bangla'},
+					 {'name': 'Boishakhi',
+					  'thumb': 'http://www.vidsplay.com/vids/traffic_arrows.jpg',
+					  'video': 'http://203.76.117.226/hls/b@0IS@K0i/index.m3u8',
+					  'genre': 'Bangla'},
+					 {'name': 'Channel i',
+                      'thumb': 'http://www.vidsplay.com/vids/chicken.jpg',
+                      'video': 'http://162.254.149.187:1935/live/channel-i/chunklist_w1568739522.m3u8',
+                      'genre': 'Bangla'},
+					{'name': 'NTV',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/ntvuk00332211.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Bangla'},
+					 {'name': 'Asian',
+                      'thumb': 'http://www.vidsplay.com/vids/us_postal.jpg',
+                      'video': 'http://162.254.149.187:1935/live/asiantv/chunklist_w1305365429.m3u8',
+                      'genre': 'Bangla'},
+					 {'name': 'SA TV',
+                      'thumb': 'http://www.vidsplay.com/vids/us_postal.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/satvoff0000022121445566475666.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Bangla'},
+					 {'name': 'Ekushey TV',
+                      'thumb': 'http://www.vidsplay.com/vids/us_postal.jpg',
+                      'video': 'http://203.76.117.226/hls/EkU0@S@/index.m3u8',
+                      'genre': 'Bangla'},
+					 {'name': 'Ekattor TV',
+                      'thumb': 'http://www.vidsplay.com/vids/us_postal.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/ekattor-8-orgd.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Bangla'},
+					 {'name': 'Independent TV ',
+                      'thumb': 'http://www.vidsplay.com/vids/us_postal.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/independent-8-org.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Bangla'},
+					{'name': 'JamunaTV',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/jamuna-test-sample-ok.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Bangla'},
+					{'name': 'Bijoy TV',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/bijoy00.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'News'}],
+            'Music': [
+					{'name': 'Gaan Bangla',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/gaanbangla-8-orgd.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Music'},
+					{'name': 'My Cinema',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/mycinema-up2.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Music'},
+					{'name': 'Millenium TV',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/millenniumtv-odr-up2.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Music'},
+					{'name': 'My TV',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/mytv-up-off.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Music'},
+                     {'name': 'ATN Music',
+                      'thumb': 'http://www.vidsplay.com/vids/pizza.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/atnmusic.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'Music'}
+                     ],
+            'News': [
+                     {'name': 'ATN News',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/atnws-sg.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'News'},
+					{'name': 'Channel 24',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/channel24-sg-e8e.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'News'},
+					{'name': 'News24',
+                      'thumb': 'http://www.vidsplay.com/vids/hamburger.jpg',
+                      'video': 'http://88.202.231.153:1935/c2VydmVyX3RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/news24local.stream/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9OS8xNS8yMDE3IDEwOjUwOjQxIFBNJmhhc2hfdmFsdWU9VzVWRStINjduclVOdENoTktsUFFoZz09JnZhbGlkbWludXRlcz01MA==',
+                      'genre': 'News'}
+                     ]}
+'''
 VIDEOS = {}
 VIDEOS['Bangla'] = []
+VIDEOS['Hindi'] = []
 
 def get_url(**kwargs):
     """
@@ -44,8 +141,28 @@ def get_categories():
     """
     return VIDEOS.iterkeys()
 
+def resolve_url(url):
+    duration=3500   #in milliseconds
+    message = "Cannot Play URL"
+    stream_url = urlresolver.HostedMediaFile(url=url).resolve()
+    # If urlresolver returns false then the video url was not resolved.
+    if not stream_url:
+        dialog = xbmcgui.Dialog()
+        dialog.notification("URL Resolver Error", message, xbmcgui.NOTIFICATION_INFO, duration)
+        return False
+    else:        
+        return stream_url
+
 def get_links():
     VIDEOS['Bangla'].append( { 'name': 'Maasranga TV', 'video': 'http://103.9.114.165:1935/tvprogram/MAASRANGA-TV/playlist.m3u8', 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+
+    ntvutube = 'https://www.youtube.com/watch?v=c2DqheGGwMI'
+    ntvstream = resolve_url(ntvutube)
+    VIDEOS['Bangla'].append( { 'name': 'NTV Tube', 'video': ntvstream, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+
+    boishakhijago = 'http://www.jagobd.com/boishakhitv'
+    boishakhistream = urlresolver.resolve(boishakhijago) 
+    VIDEOS['Bangla'].append( { 'name': 'Boishakhi Jago', 'video': boishakhistream, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
 
     url = 'http://app.jagobd.com/jagobd_app/index10.php'
 
@@ -67,6 +184,17 @@ def get_links():
     
     churl = re.sub('[a-zA-Z0-9\-]+.stream','ekusheytv-8-org.stream',churl)
     VIDEOS['Bangla'].append( { 'name': 'Ekushaey TV', 'video': churl, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+
+def get_links_from_app():
+    url = 'http://mrrainp.info/tvsworld/api.php?search='
+    req = Request(url)
+    response = urlopen(req)
+    x = load(response)
+    for channel in x['LIVETV'] :
+        if channel['cat_id'] == '104':
+            VIDEOS['Bangla'].append( { 'name': channel['channel_title'], 'video': channel['channel_url'], 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
+        if channel['cat_id'] == '99':
+            VIDEOS['Hindi'].append( { 'name': channel['channel_title'], 'video': channel['channel_url'], 'genre': 'Hindi', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
 
 def get_videos(category):
     """
@@ -180,7 +308,8 @@ def router(paramstring):
     """
     # Parse a URL-encoded paramstring to the dictionary of
     # {<parameter>: <value>} elements
-    get_links()
+    #get_links()
+    get_links_from_app()
     params = dict(parse_qsl(paramstring))
     # Check the parameters passed to the plugin
     if params:
