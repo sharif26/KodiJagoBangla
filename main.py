@@ -63,38 +63,6 @@ def resolve_url(url):
     else:        
         return stream_url
 
-def get_links():
-    VIDEOS['Bangla'].append( { 'name': 'Maasranga TV', 'video': 'http://103.9.114.165:1935/tvprogram/MAASRANGA-TV/playlist.m3u8', 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
-
-    ntvutube = 'https://www.youtube.com/watch?v=c2DqheGGwMI'
-    ntvstream = resolve_url(ntvutube)
-    VIDEOS['Bangla'].append( { 'name': 'NTV Tube', 'video': ntvstream, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
-
-    boishakhijago = 'http://www.jagobd.com/boishakhitv'
-    boishakhistream = urlresolver.resolve(boishakhijago) 
-    VIDEOS['Bangla'].append( { 'name': 'Boishakhi Jago', 'video': boishakhistream, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
-
-    url = 'http://app.jagobd.com/jagobd_app/index10.php'
-
-    post_fields = {'tag': 'get_all_channel_free'}
-    params = urlencode(post_fields)
-    headers = {'jbd-token': '8388e6b188295130aa432ae250e3e3bb'}
-
-    req = Request(url, params, headers)
-    response = urlopen(req)
-
-    x = load(response)
-    churl = 'news24local.stream'
-    for channel in x['channel'] :
-        cname = channel["name"].split("|")[0]
-        churl = channel["stream_url"]
-        if cname.startswith('Boishakhi'):
-            churl = re.sub('\d+.\d+.\d+.\d+:\d+','us.jagobd.com:1937',churl)
-        VIDEOS['Bangla'].append( { 'name': cname, 'video': churl, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
-    
-    churl = re.sub('[a-zA-Z0-9\-]+.stream','ekusheytv-8-org.stream',churl)
-    VIDEOS['Bangla'].append( { 'name': 'Ekushaey TV', 'video': churl, 'genre': 'Bangla', 'thumb': 'http://www.vidsplay.com/wp-content/uploads/2017/04/crab-screenshot.jpg' } )
-
 def get_links_from_app():
     url = 'http://mrrainp.info/tvsworld/api.php?search='
     req = Request(url)
